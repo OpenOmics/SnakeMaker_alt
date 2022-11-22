@@ -1,5 +1,5 @@
 # FunannotateMake
-A repository for the Funannotate Snakemake pipeline
+A repository for the Funannotate Snakemake pipeline, designed to be run on the completed assemblies, after assembly & scaffolding.
 
 
 ### Before running the pipeline
