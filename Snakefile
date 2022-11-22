@@ -19,7 +19,8 @@ species = config["species"]
 species_id = species.replace(" ","_")
 
 
-SAMPLE = ["pilon124_round3_chromosomesnumbered"]
+#SAMPLE = ["pilon124_round3_chromosomesnumbered"]
+SAMPLE = glob_wildcards(join(input_dir, "{ids}.fasta"))
 ID = glob_wildcards(join(fastq_dir, "{ids}.fastq.gz"))
 
 print(SAMPLE)
