@@ -9,6 +9,7 @@ from snakemake.io import expand, glob_wildcards
 result_dir = config["result_dir"]
 Lineage_name = config["lineage_name"]
 busco_db = Lineage_name.split("_odb")[0]
+augustus_name = config["augustus_name"]
 
 repeat_file = config["repeat_file"]
 protein_file = config["protein_file"]
@@ -33,6 +34,7 @@ rule All:
         expand(join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta.out.gff"),samples=SAMPLE),
 
         # Funannotate - preprocessing
+        join(funannotate_dir,busco_db + ".tar.gz")
         expand(join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta"),samples=SAMPLE),
         expand(join(result_dir,"funannotate/{samples}/{samples}.CSM.fasta"),samples=SAMPLE),
 
@@ -46,6 +48,20 @@ rule All:
         #expand(join(result_dir,"funannotate/{samples}/fun/annotate_misc/iprscan.xml"),samples=SAMPLE),
         #expand(join(result_dir,"funannotate/{samples}/fun/train_results/"+species_id+".gff3"),samples=SAMPLE),
 
+rule fun_setup:
+    input:
+        fa=transcript_file,
+    output:
+        dbout=join(funannotate_dir,busco_db + ".tar.gz")
+    params:
+        fun_dir=funannotate_dir,
+        busco_db=busco_db,
+    shell:
+        """
+        module load funannotate/1.8.9
+        funannotate setup -b {params.busco_db} -d {params.fun_dir}
+        """
+        
 #rule RepeatModeler:
 #  input:
 #    fa=join(result_dir,"all-assemblies/{samples}.fasta"),
@@ -143,7 +159,7 @@ rule fun_predict:
         protein=protein_file,
         transcript=transcript_file,
         species=species,
-        busco="c_elegans_trsk",
+        busco=augustus_name,
         fun_dir=funannotate_dir,
         busco_db=busco_db,
         threads="48",
