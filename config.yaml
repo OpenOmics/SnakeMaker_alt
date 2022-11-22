@@ -1,7 +1,7 @@
 result_dir: "/data/NCBR/projects/NCBR-174"
 fastq_dir: "/data/NCBR/projects/NCBR-174/fastq"
 lineage_name: "nematoda_odb10"
-augustus_name: ""
+augustus_name: "c_elegans_trsk"
 repeat_file: "/data/NCBR/projects/NCBR-174/Genome-Annotation/pilon124_round3_chromosomesnumbered-families.fa"
 protein_file: "/data/NCBR/projects/NCBR-174/Genome-Annotation/ortholog_files/strongyloides_stercoralis.PRJEB528.WBPS17.protein.fa"
 transcript_file: "/data/NCBR/projects/NCBR-174/Genome-Annotation/ortholog_files/strongyloides_stercoralis.PRJEB528.WBPS17.mRNA_transcripts.fa"
