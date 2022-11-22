@@ -1,0 +1,71 @@
+{
+      "__default__": {
+              "mem": "8g",
+              "time": "24:00:00",
+              "partition": "norm,largemem",
+              "threads": "8",
+              "gres": "lscratch:500"
+      },
+      "RepeatModeler": {
+              "mem": "32g",
+              "time": "10-00:00:00",
+              "partition": "norm",
+              "threads": "48",
+              "gres": "lscratch:500",
+      },
+      "RepeatMasker": {
+              "mem": "32g",
+              "time": "10-00:00:00",
+              "partition": "norm",
+              "threads": "48",
+              "gres": "lscratch:500",
+      },
+      "fun_clean": {
+              "mem": "16g",
+              "time": "4-00:00:00",
+              "partition": "norm",
+              "threads": "12",
+      },
+      "fun_sort": {
+              "mem": "16g",
+              "time": "4-00:00:00",
+              "partition": "norm",
+              "threads": "12",
+      },
+      "fun_mask": {
+              "mem": "32g",
+              "time": "5-00:00:00",
+              "partition": "norm",
+              "threads": "48",
+              "gres": "lscratch:500",
+      },
+      "fun_train": {
+              "mem": "32g",
+              "time": "5-00:00:00",
+              "partition": "norm",
+              "threads": "32",
+              "gres": "lscratch:500",
+      },
+      "fun_predict": {
+              "mem": "24g",
+              "time": "5-00:00:00",
+              "partition": "norm",
+              "threads": "48",
+              "gres": "lscratch:500",
+      },
+      "fun_iprs": {
+              "mem": "24g",
+              "time": "24:00:00",
+              "partition": "norm",
+              "threads": "32",
+              "gres": "lscratch:500",
+      },
+      "fun_annotate": {
+              "mem": "24g",
+              "time": "5-00:00:00",
+              "partition": "norm",
+              "threads": "32",
+              "gres": "lscratch:500",
+      },
+}
+
