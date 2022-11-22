@@ -1,3 +1,4 @@
+input_dir: "/data/NCBR/projects/NCBR-174/all-assemblies"
 result_dir: "/data/NCBR/projects/NCBR-174"
 fastq_dir: "/data/NCBR/projects/NCBR-174/fastq"
 lineage_name: "nematoda_odb10"
