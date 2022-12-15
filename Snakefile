@@ -17,7 +17,7 @@ transcript_file = config["transcript_file"]
 funannotate_dir = config["funannotate_dir"]
 species = config["species"]
 species_id = species.replace(" ","_")
-
+augustus="caenorhabditis",
 
 #SAMPLE = ["pilon124_round3_chromosomesnumbered"]
 SAMPLE = glob_wildcards(join(input_dir, "{ids}.fasta"))
@@ -48,6 +48,17 @@ rule All:
         expand(join(result_dir,"funannotate/{samples}/fun/annotate_results/"+species_id+".gff3"),samples=SAMPLE),
         #expand(join(result_dir,"funannotate/{samples}/fun/annotate_misc/iprscan.xml"),samples=SAMPLE),
         #expand(join(result_dir,"funannotate/{samples}/fun/train_results/"+species_id+".gff3"),samples=SAMPLE),
+
+        # Maker ctrl files
+        expand(join(result_dir,"maker/{samples}/maker_opts_rnd1.ctl"),samples=SAMPLE),
+        expand(join(result_dir,"maker/{samples}/maker_opts_rnd2.ctl"),samples=SAMPLE),
+        expand(join(result_dir,"maker/{samples}/rnd1.maker.output/rnd1_master_datastore_index.log"),samples=SAMPLE),
+        expand(join(result_dir,"maker/{samples}/rnd2.maker.output/rnd2_master_datastore_index.log"),samples=SAMPLE),
+
+        # Maker GFFs
+        expand(join(result_dir,"maker/{samples}/rnd1.maker.output/rnd1.all.gff"),samples=SAMPLE),
+        expand(join(result_dir,"maker/{samples}/rnd1.maker.output/snap/rnd1.snap.gff"),samples=SAMPLE),
+        expand(join(result_dir,"maker/{samples}/rnd2.maker.output/rnd2.all.gff"),samples=SAMPLE),
 
 rule fun_setup:
     input:
@@ -235,3 +246,116 @@ rule fun_annotate:
 #        --stranded RF --cpus {params.threads} --species "{params.species}" --TRINITYHOME .
 #        """
 
+rule maker_opts1:
+    input:
+        fa=join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta"),
+    output:
+        ctl=join(result_dir,"maker/{samples}/maker_opts_rnd1.ctl"),
+    params:
+        rname="maker_opts1",
+        protein=protein_file,
+        transcript=transcript_file,
+        augustus=augustus,
+        scripts_path=join(result_dir,"param_files"),
+        outdir=join(result_dir,"maker/{samples}"),
+    shell:
+        """
+        mkdir -p {params.outdir}
+        python3 {params.scripts_path}/generate_opts1.py {output.ctl} {input.fa} {params.protein} {params.transcript} {params.augustus}
+        """
+
+
+
+rule maker1:
+    input:
+        fa=join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta"),
+        ctl=join(result_dir,"maker/{samples}/maker_opts_rnd1.ctl"),
+    output:
+        log=join(result_dir,"maker/{samples}/rnd1.maker.output/rnd1_master_datastore_index.log"),
+    params:
+        rname="maker_rnd1",
+        outdir=join(result_dir,"maker/{samples}/rnd1"),
+        bopts=join(result_dir,"param_files/maker_bopts.log"),
+        exe=join(result_dir,"param_files/maker_exe.log")
+    shell:
+        """
+        module load maker
+        mpiexec -np 40 maker -RM_off -base {params.outdir} {input.ctl} {params.bopts} {params.exe}
+        """
+
+rule make_gff1:
+    input:
+        log=join(result_dir,"maker/{samples}/rnd1.maker.output/rnd1_master_datastore_index.log"),
+    output:
+        gff=join(result_dir,"maker/{samples}/rnd1.maker.output/rnd1.all.gff"),
+        snap=join(result_dir,"maker/{samples}/rnd1.maker.output/snap/rnd1.snap.gff"),
+    params:
+        rname="make_gff1",
+        outdir=join(result_dir,"maker/{samples}"),
+    shell:
+        """
+        module load maker snap
+        gff3_merge -d {input.log}
+        mkdir -p {params.outdir}/rnd1.maker.output/snap
+        cd {params.outdir}/rnd1.maker.output/snap
+        maker2zff -x 0.5 -l 50 -c 0 -e 0 -o 0 -d {input.log}
+        fathom genome.ann genome.dna -gene-stats > gene-stats.log
+        fathom genome.ann genome.dna -validate > validate.log
+        fathom genome.ann genome.dna -categorize 1000 > categorize.log
+        fathom uni.ann uni.dna -export 1000 -plus > uni-plus.log
+        mkdir params
+        cd params
+        forge ../export.ann ../export.dna > ../forge.log
+        cd ..
+        hmm-assembler.pl genome params > {output.snap}
+        """
+
+rule maker_opts2:
+    input:
+        fa=join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta"),
+        gff=join(result_dir,"maker/{samples}/rnd1.maker.output/rnd1.all.gff"),
+        snap=join(result_dir,"maker/{samples}/rnd1.maker.output/snap/rnd1.snap.gff"),
+    output:
+        ctl=join(result_dir,"maker/{samples}/maker_opts_rnd2.ctl"),
+    params:
+        rname="maker_opts2",
+        protein=protein_file,
+        transcript=transcript_file,
+        scripts_path=join(result_dir,"param_files"),
+        outdir=join(result_dir,"maker/{samples}"),
+    shell:
+        """
+        mkdir -p {params.outdir}
+        python3 {params.scripts_path}/generate_opts1.py {output.ctl} {input.fa} {input.gff} {input.snap} {params.protein} {params.transcript}
+        """
+
+rule maker2:
+    input:
+        fa=join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta"),
+        ctl=join(result_dir,"maker/{samples}/maker_opts_rnd2.ctl"),
+    output:
+        log=join(result_dir,"maker/{samples}/rnd2.maker.output/rnd2_master_datastore_index.log"),
+    params:
+        rname="maker_rnd2",
+        outdir=join(result_dir,"maker/{samples}/rnd2"),
+        bopts=join(result_dir,"param_files/maker_bopts.log"),
+        exe=join(result_dir,"param_files/maker_exe.log")
+    shell:
+        """
+        module load maker
+        mpiexec -np 40 maker -RM_off -base {params.outdir} {input.ctl} {params.bopts} {params.exe}
+        """
+
+rule make_gff2:
+    input:
+        log=join(result_dir,"maker/{samples}/rnd2.maker.output/rnd2_master_datastore_index.log"),
+    output:
+        gff=join(result_dir,"maker/{samples}/rnd2.maker.output/rnd2.all.gff"),
+    params:
+        rname="make_gff2",
+        outdir=join(result_dir,"maker/{samples}"),
+    shell:
+        """
+        module load maker snap
+        gff3_merge -d {input.log}
+        """
