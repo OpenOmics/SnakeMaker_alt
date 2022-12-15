@@ -12,7 +12,7 @@ Edit the config.yaml as follows:
  * Change 'transcript_file' and 'protein_file' to the path of known transcripts/proteins for this species, or a closely related species.
  * Change 'species' to be the species name of the assembly being annotated, or a unique identifier.
  * If repeat sequences for this genome are known, change 'repeat_file' to the path with the fasta of these repeat sequences. If repeat sequences are not known, uncomment the repeatmodeler rule/output & change the input repeats for repeatmasker/fun_mask to be the repeatmodeler output.
- * Change 'funannotate_dir' to be the path where busco odb10 databases will be stored.
+ * Change 'funannotate_dir' to be the path to this downloaded github directory. This is where busco odb10 databases will be stored and where the parameter files & custom scripts are stored & accessed.
 
 ### Test running the pipeline
 
