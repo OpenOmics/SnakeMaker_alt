@@ -47,7 +47,7 @@
               "gres": "lscratch:500",
       },
       "fun_predict": {
-              "mem": "24g",
+              "mem": "48g",
               "time": "5-00:00:00",
               "partition": "norm",
               "threads": "48",
@@ -66,6 +66,20 @@
               "partition": "norm",
               "threads": "32",
               "gres": "lscratch:500",
+      },
+      "maker_rnd1": {
+              "mem": "1100g",
+              "time": "5-00:00:00",
+              "partition": "largemem",
+              "ntasks": "40",
+              "cpus-per-task": "4",
+      },
+      "maker_rnd2": {
+              "mem": "1100g",
+              "time": "5-00:00:00",
+              "partition": "largemem",
+              "ntasks": "40",
+              "cpus-per-task": "4",
       },
 }
 
