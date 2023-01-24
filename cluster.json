@@ -2,7 +2,7 @@
       "__default__": {
               "mem": "8g",
               "time": "24:00:00",
-              "partition": "norm,largemem",
+              "partition": "norm",
               "threads": "8",
               "gres": "lscratch:500"
       },
