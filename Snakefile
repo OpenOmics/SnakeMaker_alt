@@ -6,6 +6,7 @@
 from os.path import join
 from snakemake.io import expand, glob_wildcards
 
+input_dir = config["input_dir"]
 result_dir = config["result_dir"]
 Lineage_name = config["lineage_name"]
 busco_db = Lineage_name.split("_odb")[0]
@@ -20,17 +21,17 @@ species_id = species.replace(" ","_")
 augustus="caenorhabditis",
 
 #SAMPLE = ["pilon124_round3_chromosomesnumbered"]
-SAMPLE = glob_wildcards(join(input_dir, "{ids}.fasta"))
-ID = glob_wildcards(join(fastq_dir, "{ids}.fastq.gz"))
+SAMPLE = list(glob_wildcards(join(input_dir, "{ids}.fasta")))[0]
+#ID = glob_wildcards(join(fastq_dir, "{ids}.fastq.gz"))
 
 print(SAMPLE)
 
-print(ID)
+#print(ID)
 
 rule All:
     input:
         # Repeats
-        #expand(join(result_dir,"funannotate/{samples}/{samples}-families.fa"),samples=SAMPLE),
+        expand(join(result_dir,"funannotate/{samples}/{samples}-families.fa"),samples=SAMPLE),
         expand(join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta.masked"),samples=SAMPLE),
         expand(join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta.out.gff"),samples=SAMPLE),
 
@@ -68,41 +69,44 @@ rule fun_setup:
     params:
         fun_dir=funannotate_dir,
         busco_db=busco_db,
+        rname="setup",
     shell:
         """
         module load funannotate/1.8.9
         funannotate setup -b {params.busco_db} -d {params.fun_dir}
         """
         
-#rule RepeatModeler:
-#  input:
-#    fa=join(result_dir,"all-assemblies/{samples}.fasta"),
-#  output:
-#    fa=join(result_dir,"all-assemblies/{samples}-families.fa"),
-#  params:
-#    rname="RepeatModeler",
-#    dir=join(result_dir,"all-assemblies"),
-#    id="{samples}.{assemblers}"
-#  threads:
-#    48
-#  shell:
-#    """
-#    cd {params.dir}
-#    module load repeatmodeler
-#    BuildDatabase -name {params.id} {input.fa}
-#    RepeatModeler -database {params.id} -pa {threads} -LTRStruct >& {params.id}.out
-#    """
+rule RepeatModeler:
+  input:
+    fa=join(input_dir,"{samples}.fasta"),
+  output:
+    fa=temp(join(input_dir,"{samples}-families.fa")),
+    rep=join(results_dir,"funannotate/{samples}/{samples}-families.fa"),
+  params:
+    rname="RepeatModeler",
+    dir=input_dir,
+    id="{samples}",
+  threads:
+    48
+  shell:
+    """
+    cd {params.dir}
+    module load repeatmodeler
+    BuildDatabase -name {params.id} {input.fa}
+    RepeatModeler -database {params.id} -pa {threads} -LTRStruct >& {params.id}.out
+    cp {output.fa} {output.rep}
+    """
 
 rule RepeatMasker:
   input:
     fa=join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta"),
+    rep=join(results_dir,"funannotate/{samples}/{samples}-families.fa"),
   output:
     fa=join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta.masked"),
     gff=join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta.out.gff"),
   params:
     rname="RepeatMasker",
     dir=join(result_dir,"funannotate/{samples}"),
-    rep=repeat_file,
     threads="48",
   shell:
     """
@@ -113,7 +117,7 @@ rule RepeatMasker:
 
 rule fun_clean:
     input:
-        fa=join(result_dir,"hifiasm/{samples}.ragtag.fasta"),
+        fa=join(input_dir,"{samples}.fasta"),
     output:
         fa=temp(join(result_dir,"funannotate/{samples}/{samples}.cleaned.fasta")),
     params:
@@ -124,7 +128,7 @@ rule fun_clean:
         out = open(output.fa,"w")
         for r in SeqIO.parse(open(input.fa,"r"),"fasta"):
             if len(str(r.seq)) >= 1000:
-                out.write(">" + r.description + "\n" + str(r.seq))
+                out.write(">" + r.description + "\n" + str(r.seq) + "\n")
 
 rule fun_sort:
     input:
@@ -144,11 +148,11 @@ rule fun_sort:
 rule fun_mask:
     input:
         fa=join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta"),
+        rep=join(results_dir,"funannotate/{samples}/{samples}-families.fa"),
     output:
         fa=join(result_dir,"funannotate/{samples}/{samples}.CSM.fasta"),
     params:
         rname="fun_mask",
-        rep=repeat_file,
         dir=join(result_dir,"funannotate/{samples}"),
         threads="32",
     shell:
