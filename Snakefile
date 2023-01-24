@@ -260,7 +260,7 @@ rule maker_opts1:
         protein=protein_file,
         transcript=transcript_file,
         augustus=augustus,
-        scripts_path=join(funannotate_dir,"param_files"),
+        scripts_path=join(result_dir,"param_files"),
         outdir=join(result_dir,"maker/{samples}"),
     shell:
         """
@@ -279,8 +279,8 @@ rule maker1:
     params:
         rname="maker_rnd1",
         outdir=join(result_dir,"maker/{samples}/rnd1"),
-        bopts=join(funannotate_dir,"param_files/maker_bopts.log"),
-        exe=join(funannotate_dir,"param_files/maker_exe.log")
+        bopts=join(result_dir,"param_files/maker_bopts.log"),
+        exe=join(result_dir,"param_files/maker_exe.log")
     shell:
         """
         module load maker
@@ -325,7 +325,7 @@ rule maker_opts2:
         rname="maker_opts2",
         protein=protein_file,
         transcript=transcript_file,
-        scripts_path=join(funannotate_dir,"param_files"),
+        scripts_path=join(result_dir,"param_files"),
         outdir=join(result_dir,"maker/{samples}"),
     shell:
         """
@@ -342,8 +342,8 @@ rule maker2:
     params:
         rname="maker_rnd2",
         outdir=join(result_dir,"maker/{samples}/rnd2"),
-        bopts=join(funannotate_dir,"param_files/maker_bopts.log"),
-        exe=join(funannotate_dir,"param_files/maker_exe.log")
+        bopts=join(result_dir,"param_files/maker_bopts.log"),
+        exe=join(result_dir,"param_files/maker_exe.log")
     shell:
         """
         module load maker
