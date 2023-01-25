@@ -5,14 +5,15 @@
 ###########################################################################
 from os.path import join
 from snakemake.io import expand, glob_wildcards
+from Bio import SeqIO
 
-input_dir = config["input_dir"]
 result_dir = config["result_dir"]
 Lineage_name = config["lineage_name"]
 busco_db = Lineage_name.split("_odb")[0]
 augustus_name = config["augustus_name"]
+input_dir = config["input_dir"]
 
-repeat_file = config["repeat_file"]
+#repeat_file = config["repeat_file"]
 protein_file = config["protein_file"]
 transcript_file = config["transcript_file"]
 funannotate_dir = config["funannotate_dir"]
@@ -26,17 +27,16 @@ SAMPLE = list(glob_wildcards(join(input_dir, "{ids}.fasta")))[0]
 
 print(SAMPLE)
 
-#print(ID)
-
 rule All:
     input:
         # Repeats
+        expand(join(input_dir,"{samples}-families.fa"),samples=SAMPLE),
         expand(join(result_dir,"funannotate/{samples}/{samples}-families.fa"),samples=SAMPLE),
         expand(join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta.masked"),samples=SAMPLE),
         expand(join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta.out.gff"),samples=SAMPLE),
 
         # Funannotate - preprocessing
-        join(funannotate_dir,busco_db + ".tar.gz")
+        join(funannotate_dir,"databases",busco_db + ".tar.gz"),
         expand(join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta"),samples=SAMPLE),
         expand(join(result_dir,"funannotate/{samples}/{samples}.CSM.fasta"),samples=SAMPLE),
 
@@ -65,11 +65,11 @@ rule fun_setup:
     input:
         fa=transcript_file,
     output:
-        dbout=join(funannotate_dir,busco_db + ".tar.gz")
+        dbout=join(funannotate_dir,"databases",busco_db + ".tar.gz"),
     params:
-        fun_dir=funannotate_dir,
+        rname="fun_setup",
+        fun_dir=join(funannotate_dir,"databases"),
         busco_db=busco_db,
-        rname="setup",
     shell:
         """
         module load funannotate/1.8.9
@@ -80,16 +80,18 @@ rule RepeatModeler:
   input:
     fa=join(input_dir,"{samples}.fasta"),
   output:
-    fa=temp(join(input_dir,"{samples}-families.fa")),
+    fa=join(input_dir,"{samples}-families.fa"),
     rep=join(results_dir,"funannotate/{samples}/{samples}-families.fa"),
   params:
     rname="RepeatModeler",
     dir=input_dir,
     id="{samples}",
+    opdir=join(result_dir,"funannotate/{samples}"),
   threads:
     48
   shell:
     """
+    mkdir -p {params.opdir}
     cd {params.dir}
     module load repeatmodeler
     BuildDatabase -name {params.id} {input.fa}
@@ -100,19 +102,20 @@ rule RepeatModeler:
 rule RepeatMasker:
   input:
     fa=join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta"),
-    rep=join(results_dir,"funannotate/{samples}/{samples}-families.fa"),
+    rep=join(result_dir,"funannotate/{samples}/{samples}-families.fa"),
   output:
     fa=join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta.masked"),
     gff=join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta.out.gff"),
   params:
     rname="RepeatMasker",
     dir=join(result_dir,"funannotate/{samples}"),
+    #rep=repeat_file,
     threads="48",
   shell:
     """
     cd {params.dir}
     module load repeatmasker
-    RepeatMasker -u -s -poly -engine rmblast -pa {params.threads} -gff -no_is -gccalc -norna -lib {params.rep} {input.fa}
+    RepeatMasker -u -s -poly -engine rmblast -pa {params.threads} -gff -no_is -gccalc -norna -lib {input.rep} {input.fa}
     """
 
 rule fun_clean:
@@ -148,18 +151,19 @@ rule fun_sort:
 rule fun_mask:
     input:
         fa=join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta"),
-        rep=join(results_dir,"funannotate/{samples}/{samples}-families.fa"),
+        rep=join(result_dir,"funannotate/{samples}/{samples}-families.fa"),
     output:
         fa=join(result_dir,"funannotate/{samples}/{samples}.CSM.fasta"),
     params:
         rname="fun_mask",
+        #rep=repeat_file,
         dir=join(result_dir,"funannotate/{samples}"),
         threads="32",
     shell:
         """
         module load funannotate
         mkdir -p {params.dir}
-        funannotate mask -i {input.fa} --cpus {params.threads} -o {output.fa} -l {params.rep}
+        funannotate mask -i {input.fa} --cpus {params.threads} -o {output.fa} -l {input.rep}
         """
 
 rule fun_predict:
@@ -176,7 +180,7 @@ rule fun_predict:
         transcript=transcript_file,
         species=species,
         busco=augustus_name,
-        fun_dir=funannotate_dir,
+        fun_dir=join(funannotate_dir,"databases"),
         busco_db=busco_db,
         threads="48",
     shell:
@@ -215,7 +219,7 @@ rule fun_annotate:
     output:
         gff=join(result_dir,"funannotate/{samples}/fun/annotate_results/"+species_id+".gff3"),
     params:
-        fun_dir=funannotate_dir,
+        fun_dir=join(funannotate_dir,"databases"),
         rname="fun_annotate",
         dir=join(result_dir,"funannotate/{samples}/fun"),
         species=species,
@@ -270,7 +274,7 @@ rule maker_opts1:
 
 
 
-rule maker1:
+rule maker_rnd1:
     input:
         fa=join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta"),
         ctl=join(result_dir,"maker/{samples}/maker_opts_rnd1.ctl"),
@@ -278,13 +282,15 @@ rule maker1:
         log=join(result_dir,"maker/{samples}/rnd1.maker.output/rnd1_master_datastore_index.log"),
     params:
         rname="maker_rnd1",
-        outdir=join(result_dir,"maker/{samples}/rnd1"),
+        outid="rnd1",
+        outdir=join(result_dir,"maker/{samples}"),
         bopts=join(result_dir,"param_files/maker_bopts.log"),
-        exe=join(result_dir,"param_files/maker_exe.log")
+        exe=join(result_dir,"param_files/maker_exe.log"),
     shell:
         """
         module load maker
-        mpiexec -np 40 maker -RM_off -base {params.outdir} {input.ctl} {params.bopts} {params.exe}
+        cd {params.outdir}
+        mpiexec -np 40 maker -RM_off -base {params.outid} {input.ctl} {params.bopts} {params.exe}
         """
 
 rule make_gff1:
@@ -299,6 +305,7 @@ rule make_gff1:
     shell:
         """
         module load maker snap
+        cd {params.outdir}/rnd1.maker.output/
         gff3_merge -d {input.log}
         mkdir -p {params.outdir}/rnd1.maker.output/snap
         cd {params.outdir}/rnd1.maker.output/snap
@@ -307,7 +314,7 @@ rule make_gff1:
         fathom genome.ann genome.dna -validate > validate.log
         fathom genome.ann genome.dna -categorize 1000 > categorize.log
         fathom uni.ann uni.dna -export 1000 -plus > uni-plus.log
-        mkdir params
+        mkdir -p params
         cd params
         forge ../export.ann ../export.dna > ../forge.log
         cd ..
@@ -333,7 +340,7 @@ rule maker_opts2:
         python3 {params.scripts_path}/generate_opts1.py {output.ctl} {input.fa} {input.gff} {input.snap} {params.protein} {params.transcript}
         """
 
-rule maker2:
+rule maker_rnd2:
     input:
         fa=join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta"),
         ctl=join(result_dir,"maker/{samples}/maker_opts_rnd2.ctl"),
@@ -341,13 +348,15 @@ rule maker2:
         log=join(result_dir,"maker/{samples}/rnd2.maker.output/rnd2_master_datastore_index.log"),
     params:
         rname="maker_rnd2",
-        outdir=join(result_dir,"maker/{samples}/rnd2"),
+        outid="rnd2",
+        outdir=join(result_dir,"maker/{samples}"),
         bopts=join(result_dir,"param_files/maker_bopts.log"),
-        exe=join(result_dir,"param_files/maker_exe.log")
+        exe=join(result_dir,"param_files/maker_exe.log"),
     shell:
         """
         module load maker
-        mpiexec -np 40 maker -RM_off -base {params.outdir} {input.ctl} {params.bopts} {params.exe}
+        cd {params.outdir}
+        mpiexec -np 40 maker -RM_off -base {params.outid} {input.ctl} {params.bopts} {params.exe}
         """
 
 rule make_gff2:
@@ -361,5 +370,6 @@ rule make_gff2:
     shell:
         """
         module load maker snap
+        cd {params.outdir}
         gff3_merge -d {input.log}
         """
