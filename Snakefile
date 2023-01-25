@@ -81,7 +81,7 @@ rule RepeatModeler:
     fa=join(input_dir,"{samples}.fasta"),
   output:
     fa=join(input_dir,"{samples}-families.fa"),
-    rep=join(results_dir,"funannotate/{samples}/{samples}-families.fa"),
+    rep=join(result_dir,"funannotate/{samples}/{samples}-families.fa"),
   params:
     rname="RepeatModeler",
     dir=input_dir,
