@@ -58,7 +58,7 @@ rule All:
 
         # Maker GFFs
         expand(join(result_dir,"maker/{samples}/rnd1.maker.output/rnd1.all.gff"),samples=SAMPLE),
-        expand(join(result_dir,"maker/{samples}/rnd1.maker.output/snap/rnd1.snap.gff"),samples=SAMPLE),
+        expand(join(result_dir,"maker/{samples}/rnd1.maker.output/snap/rnd1.snap.hmm"),samples=SAMPLE),
         expand(join(result_dir,"maker/{samples}/rnd2.maker.output/rnd2.all.gff"),samples=SAMPLE),
 
 rule fun_setup:
@@ -298,7 +298,7 @@ rule make_gff1:
         log=join(result_dir,"maker/{samples}/rnd1.maker.output/rnd1_master_datastore_index.log"),
     output:
         gff=join(result_dir,"maker/{samples}/rnd1.maker.output/rnd1.all.gff"),
-        snap=join(result_dir,"maker/{samples}/rnd1.maker.output/snap/rnd1.snap.gff"),
+        snap=join(result_dir,"maker/{samples}/rnd1.maker.output/snap/rnd1.snap.hmm"),
     params:
         rname="make_gff1",
         outdir=join(result_dir,"maker/{samples}"),
@@ -325,7 +325,7 @@ rule maker_opts2:
     input:
         fa=join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta"),
         gff=join(result_dir,"maker/{samples}/rnd1.maker.output/rnd1.all.gff"),
-        snap=join(result_dir,"maker/{samples}/rnd1.maker.output/snap/rnd1.snap.gff"),
+        snap=join(result_dir,"maker/{samples}/rnd1.maker.output/snap/rnd1.snap.hmm"),
     output:
         ctl=join(result_dir,"maker/{samples}/maker_opts_rnd2.ctl"),
     params:
@@ -337,7 +337,7 @@ rule maker_opts2:
     shell:
         """
         mkdir -p {params.outdir}
-        python3 {params.scripts_path}/generate_opts1.py {output.ctl} {input.fa} {input.gff} {input.snap} {params.protein} {params.transcript}
+        python3 {params.scripts_path}/generate_opts2.py {output.ctl} {input.fa} {input.gff} {input.snap} {params.protein} {params.transcript}
         """
 
 rule maker_rnd2:
@@ -370,6 +370,6 @@ rule make_gff2:
     shell:
         """
         module load maker snap
-        cd {params.outdir}
+        cd {params.outdir}/rnd2.maker.output/
         gff3_merge -d {input.log}
         """
