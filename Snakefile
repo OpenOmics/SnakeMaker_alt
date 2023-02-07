@@ -61,6 +61,11 @@ rule All:
         expand(join(result_dir,"maker/{samples}/rnd1.maker.output/snap/rnd1.snap.hmm"),samples=SAMPLE),
         expand(join(result_dir,"maker/{samples}/rnd2.maker.output/rnd2.all.gff"),samples=SAMPLE),
 
+        # Merged GFFs
+        expand(join(result_dir,"{samples}.combined.gtf"),samples=SAMPLE),
+        expand(join(result_dir,"{samples}.transdecoder.gtf"),samples=SAMPLE),
+        expand(join(result_dir,"{samples}.final.gtf"),samples=SAMPLE),
+
 rule fun_setup:
     input:
         fa=transcript_file,
@@ -372,4 +377,60 @@ rule make_gff2:
         module load maker snap
         cd {params.outdir}/rnd2.maker.output/
         gff3_merge -d {input.log}
+        """
+
+rule gffmerge:
+    input:
+        maker=join(result_dir,"maker/{samples}/rnd2.maker.output/rnd2.all.gff"),
+        fun=join(result_dir,"funannotate/{samples}/fun/annotate_results/"+species_id+".gff3"),
+    output:
+        merge=join(result_dir,"{samples}.combined.gtf"),
+    params:
+        rname="gffmerge",
+        id="{samples}",
+    shell:
+        """
+        module load gffcompare bedtools
+        gffcompare -o {params.id} {input.maker} {input.fun}
+        """
+
+rule gff_annot:
+    input:
+        fa=join(result_dir,"funannotate/{samples}/{samples}.cleaned.sorted.fasta"),
+        merge=join(result_dir,"{samples}.combined.gtf"),
+    output:
+        cdna=temp(join(result_dir,"{samples}.cdna.fa")),
+        merge=temp(join(result_dir,"{samples}.combined.gff3")),
+        gff1=join(result_dir,"{samples}.cdna.fa.transdecoder_dir/longest_orfs.cds.best_candidates.gff3"),
+        gff2=temp(join(result_dir,"{samples}.transdecoder.gff3")),
+    params:
+        rname="gff_annot",
+        id="{samples}",
+    shell:
+        """
+        module load TransDecoder
+        gtf_genome_to_cdna_fasta.pl {input.merge} {input.fa} > {output.cdna}
+        gtf_to_alignment_gff3.pl {input.merge} > {output.merge}
+        TransDecoder.LongOrfs -t {output.cdna}
+        TransDecoder.Predict -t {output.cdna}
+        cdna_alignment_orf_to_genome_orf.pl \
+        {output.gff1} \
+        {output.merge} \
+        {output.cdna} > {output.gff2}
+        """
+
+rule gff_format:
+    input:
+        gff2=join(result_dir,"{samples}.transdecoder.gff3"),
+    output:
+        gff3=join(result_dir,"{samples}.transdecoder.gtf"),
+        gff4=join(result_dir,"{samples}.final.gtf"),
+    params:
+        rname="gff_format",
+        param_dir=join(result_dir,"param_files"),
+    shell:
+        """
+        module load singularity python
+        singularity exec -B $PWD {params.param_dir}/agat_0.8.0--pl5262hdfd78af_0.sif agat_convert_sp_gff2gtf.pl --gff {input.gff2} -o {output.gff3}
+        python3 {params.param_dir}/clean_gtf.py {output.gff3} > {output.gff4}
         """
