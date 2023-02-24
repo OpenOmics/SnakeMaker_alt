@@ -295,7 +295,7 @@ rule maker_rnd1:
         """
         module load maker
         cd {params.outdir}
-        mpiexec -np 40 maker -RM_off -base {params.outid} {input.ctl} {params.bopts} {params.exe}
+        mpiexec -np 80 maker -RM_off -base {params.outid} {input.ctl} {params.bopts} {params.exe}
         """
 
 rule make_gff1:
