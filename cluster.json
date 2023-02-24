@@ -68,17 +68,15 @@
               "gres": "lscratch:500",
       },
       "maker_rnd1": {
-              "mem": "1100g",
+              "mem": "1000g",
               "time": "5-00:00:00",
               "partition": "largemem",
-              "ntasks": "40",
-              "cpus-per-task": "4",
+              "threads": "80",
       },
       "maker_rnd2": {
-              "mem": "1100g",
+              "mem": "1000g",
               "time": "5-00:00:00",
               "partition": "largemem",
-              "ntasks": "40",
-              "cpus-per-task": "4",
+              "threads": "40",
       },
 }
