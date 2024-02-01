@@ -8,17 +8,12 @@ from snakemake.io import expand, glob_wildcards
 from Bio import SeqIO
 
 result_dir = config["result_dir"]
-Lineage_name = config["lineage_name"]
-busco_db = Lineage_name.split("_odb")[0]
-augustus_name = config["augustus_name"]
 input_dir = config["input_dir"]
 
 #repeat_file = config["repeat_file"]
 protein_file = config["protein_file"]
 transcript_file = config["transcript_file"]
 funannotate_dir = config["funannotate_dir"]
-species = config["species"]
-species_id = species.replace(" ","_")
 augustus="caenorhabditis",
 
 #SAMPLE = ["pilon124_round3_chromosomesnumbered"]
@@ -36,7 +31,6 @@ rule All:
         expand(join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta.out.gff"),samples=SAMPLE),
 
         # Funannotate - preprocessing
-        join(funannotate_dir,"databases",busco_db + ".tar.gz"),
         expand(join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta"),samples=SAMPLE),
         expand(join(result_dir,"{samples}/{samples}.CSM.fasta"),samples=SAMPLE),
 
