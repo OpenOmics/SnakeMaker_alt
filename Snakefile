@@ -10,7 +10,7 @@ from Bio import SeqIO
 result_dir = config["result_dir"]
 input_dir = config["input_dir"]
 
-#repeat_file = config["repeat_file"]
+repeat_file = config["repeat_file"]
 protein_file = config["protein_file"]
 transcript_file = config["transcript_file"]
 funannotate_dir = config["funannotate_dir"]
@@ -25,8 +25,8 @@ print(SAMPLE)
 rule All:
     input:
         # Repeats
-        expand(join(input_dir,"{samples}-families.fa"),samples=SAMPLE),
-        expand(join(result_dir,"{samples}/{samples}-families.fa"),samples=SAMPLE),
+        #expand(join(input_dir,"{samples}-families.fa"),samples=SAMPLE),
+        #expand(join(result_dir,"{samples}/{samples}-families.fa"),samples=SAMPLE),
         expand(join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta.masked"),samples=SAMPLE),
         expand(join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta.out.gff"),samples=SAMPLE),
 
@@ -50,28 +50,28 @@ rule All:
         expand(join(result_dir,"{samples}.final.gtf"),samples=SAMPLE),
 
         
-rule RepeatModeler:
-  input:
-    fa=join(input_dir,"{samples}.fasta"),
-  output:
-    fa=join(input_dir,"{samples}-families.fa"),
-    rep=join(result_dir,"{samples}/{samples}-families.fa"),
-  params:
-    rname="RepeatModeler",
-    dir=input_dir,
-    id="{samples}",
-    opdir=join(result_dir,"{samples}"),
-  threads:
-    48
-  shell:
-    """
-    mkdir -p {params.opdir}
-    cd {params.dir}
-    module load repeatmodeler
-    BuildDatabase -name {params.id} {input.fa}
-    RepeatModeler -database {params.id} -pa {threads} -LTRStruct >& {params.id}.out
-    cp {output.fa} {output.rep}
-    """
+#rule RepeatModeler:
+#  input:
+#    fa=join(input_dir,"{samples}.fasta"),
+#  output:
+#    fa=join(input_dir,"{samples}-families.fa"),
+#    rep=join(result_dir,"{samples}/{samples}-families.fa"),
+#  params:
+#    rname="RepeatModeler",
+#    dir=input_dir,
+#    id="{samples}",
+#    opdir=join(result_dir,"{samples}"),
+#  threads:
+#    48
+#  shell:
+#    """
+#    mkdir -p {params.opdir}
+#    cd {params.dir}
+#    module load repeatmodeler
+#    BuildDatabase -name {params.id} {input.fa}
+#    RepeatModeler -database {params.id} -pa {threads} -LTRStruct >& {params.id}.out
+#    cp {output.fa} {output.rep}
+#    """
 
 rule RepeatMasker:
   input:
@@ -142,7 +142,7 @@ rule fun_mask:
 
 rule maker_opts1:
     input:
-        fa=join(result_dir,"{samples}/{samples}.CSM.fasta"),
+        fa=join(result_dir,"{samples}/{samples}.cleaned.fasta"),
     output:
         ctl=join(result_dir,"{samples}/maker_opts_rnd1.ctl"),
     params:
@@ -162,7 +162,7 @@ rule maker_opts1:
 
 rule maker_rnd1:
     input:
-        fa=join(result_dir,"{samples}/{samples}.CSM.fasta"),
+        fa=join(result_dir,"{samples}/{samples}.cleaned.fasta"),
         ctl=join(result_dir,"{samples}/maker_opts_rnd1.ctl"),
     output:
         log=join(result_dir,"{samples}/rnd1.maker.output/rnd1_master_datastore_index.log"),
@@ -209,7 +209,7 @@ rule make_gff1:
 
 rule maker_opts2:
     input:
-        fa=join(result_dir,"{samples}/{samples}.CSM.fasta"),
+        fa=join(result_dir,"{samples}/{samples}.cleaned.fasta"),
         gff=join(result_dir,"{samples}/rnd1.maker.output/rnd1.all.gff"),
         snap=join(result_dir,"{samples}/rnd1.maker.output/snap/rnd1.snap.hmm"),
     output:
@@ -228,7 +228,7 @@ rule maker_opts2:
 
 rule maker_rnd2:
     input:
-        fa=join(result_dir,"{samples}/{samples}.CSM.fasta"),
+        fa=join(result_dir,"{samples}/{samples}.cleaned.fasta"),
         ctl=join(result_dir,"{samples}/maker_opts_rnd2.ctl"),
     output:
         log=join(result_dir,"{samples}/rnd2.maker.output/rnd2_master_datastore_index.log"),
