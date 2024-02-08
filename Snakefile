@@ -27,12 +27,12 @@ rule All:
         # Repeats
         #expand(join(input_dir,"{samples}-families.fa"),samples=SAMPLE),
         #expand(join(result_dir,"{samples}/{samples}-families.fa"),samples=SAMPLE),
-        expand(join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta.masked"),samples=SAMPLE),
-        expand(join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta.out.gff"),samples=SAMPLE),
+        #expand(join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta.masked"),samples=SAMPLE),
+        #expand(join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta.out.gff"),samples=SAMPLE),
 
         # Funannotate - preprocessing
         expand(join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta"),samples=SAMPLE),
-        expand(join(result_dir,"{samples}/{samples}.CSM.fasta"),samples=SAMPLE),
+        #expand(join(result_dir,"{samples}/{samples}.CSM.fasta"),samples=SAMPLE),
 
         # Maker ctrl files
         expand(join(result_dir,"{samples}/maker_opts_rnd1.ctl"),samples=SAMPLE),
@@ -73,24 +73,24 @@ rule All:
 #    cp {output.fa} {output.rep}
 #    """
 
-rule RepeatMasker:
-  input:
-    fa=join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta"),
-    rep=join(result_dir,"{samples}/{samples}-families.fa"),
-  output:
-    fa=join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta.masked"),
-    gff=join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta.out.gff"),
-  params:
-    rname="RepeatMasker",
-    dir=join(result_dir,"{samples}"),
-    #rep=repeat_file,
-    threads="48",
-  shell:
-    """
-    cd {params.dir}
-    module load repeatmasker
-    RepeatMasker -u -s -poly -engine rmblast -pa {params.threads} -gff -no_is -gccalc -norna -lib {input.rep} {input.fa}
-    """
+#rule RepeatMasker:
+#  input:
+#    fa=join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta"),
+#    rep=join(result_dir,"{samples}/{samples}-families.fa"),
+#  output:
+#    fa=join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta.masked"),
+#    gff=join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta.out.gff"),
+#  params:
+#    rname="RepeatMasker",
+#    dir=join(result_dir,"{samples}"),
+#    #rep=repeat_file,
+#    threads="48",
+#  shell:
+#    """
+#    cd {params.dir}
+#    module load repeatmasker
+#    RepeatMasker -u -s -poly -engine rmblast -pa {params.threads} -gff -no_is -gccalc -norna -lib {input.rep} {input.fa}
+#    """
 
 rule fun_clean:
     input:
@@ -122,23 +122,23 @@ rule fun_sort:
         funannotate sort -i {input.fa} -b scaffold -o {output.fa}
         """
 
-rule fun_mask:
-    input:
-        fa=join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta"),
-        gff=join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta.out.gff"),
-    output:
-        fa=join(result_dir,"{samples}/{samples}.CSM.fasta"),
-    params:
-        rname="fun_mask",
-        #rep=repeat_file,
-        dir=join(result_dir,"{samples}"),
-        threads="32",
-    shell:
-        """
-        module load bedtools
-        mkdir -p {params.dir}
-        maskFastaFromBed -soft -fi {input.fa} -fo {output.fa} -bed {input.gff}
-        """
+#rule fun_mask:
+#    input:
+#        fa=join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta"),
+#        gff=join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta.out.gff"),
+#    output:
+#        fa=join(result_dir,"{samples}/{samples}.CSM.fasta"),
+#    params:
+#        rname="fun_mask",
+#        #rep=repeat_file,
+#        dir=join(result_dir,"{samples}"),
+#        threads="32",
+#    shell:
+#        """
+#        module load bedtools
+#        mkdir -p {params.dir}
+#        maskFastaFromBed -soft -fi {input.fa} -fo {output.fa} -bed {input.gff}
+#        """
 
 rule maker_opts1:
     input:
