@@ -5,7 +5,7 @@ genome = sys.argv[2]
 prot_fa = sys.argv[3]
 tran_fa = sys.argv[4]
 augustus = sys.argv[5]
-
+alt_fa = sys.argv[6]
 
 out1.write("""#-----Genome (these are always required)\n""")
 out1.write("""genome=""" + genome + """ #genome sequence (fasta file or fasta embeded in GFF3 file)\n""")
@@ -22,8 +22,8 @@ out1.write("""pred_pass=0 #use ab-initio predictions in maker_gff: 1 = yes, 0 = 
 out1.write("""other_pass=0 #passthrough anyything else in maker_gff: 1 = yes, 0 = no\n""")
 out1.write("""\n""")
 out1.write("""#-----EST Evidence (for best results provide a file for at least one)\n""")
-out1.write("""est= #set of ESTs or assembled mRNA-seq in fasta format\n""")
-out1.write("""altest=""" + tran_fa + """ #EST/cDNA sequence file in fasta format from an alternate organism\n""")
+out1.write("""est=""" + tran_fa + """ #set of ESTs or assembled mRNA-seq in fasta format\n""")
+out1.write("""altest=""" + alt_fa + """ #EST/cDNA sequence file in fasta format from an alternate organism\n""")
 out1.write("""est_gff= #aligned ESTs or mRNA-seq from an external GFF3 file\n""")
 out1.write("""altest_gff= #aligned ESTs from a closly relate species in GFF3 format\n""")
 out1.write("""\n""")
