@@ -14,7 +14,7 @@ fi
 if [ $1 == "process" ]
 then
 ### WORKING
-snakemake --latency-wait 120 --configfile $R/config.yaml -s $R/Snakefile -d $R --printshellcmds --use-conda --cluster-config $R/cluster.json --keep-going --cluster "sbatch --gres {cluster.gres} --cpus-per-task {cluster.threads} -p {cluster.partition} -t {cluster.time} --mem {cluster.mem} --job-name={params.rname}" -j 500 --rerun-incomplete --stats $R/Reports/snakemake.stats | tee -a $R/Reports/snakemake.log
+snakemake --latency-wait 120 --configfile $R/config.yaml -s $R/Snakefile -d $R --printshellcmds --use-conda --cluster-config $R/cluster.json --keep-going --cluster "sbatch --gres {cluster.gres} -n {cluster.threads} -p {cluster.partition} -t {cluster.time} --mem {cluster.mem} --job-name={params.rname}" -j 500 --rerun-incomplete --stats $R/Reports/snakemake.stats | tee -a $R/Reports/snakemake.log
 fi
 
 cd $R
