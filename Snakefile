@@ -166,7 +166,8 @@ rule maker_opts2:
         gff=join(result_dir,"{samples}/rnd1.maker.output/rnd1.all.gff"),
         snap=join(result_dir,"{samples}/rnd1.maker.output/snap/rnd1.snap.hmm"),
     output:
-        ctl=join(result_dir,"{samples}/maker_opts_rnd2.ctl"),
+        ctl2=join(result_dir,"{samples}/maker_opts_rnd2.ctl"),
+        ctl3=join(result_dir,"{samples}/maker_opts_rnd3.ctl"),
     params:
         rname="maker_opts2",
         protein=protein_file,
@@ -176,7 +177,8 @@ rule maker_opts2:
     shell:
         """
         mkdir -p {params.outdir}
-        python3 {params.scripts_path}/generate_opts2.py {output.ctl} {input.fa} {input.gff} {input.snap} {params.protein} {params.transcript}
+        python3 {params.scripts_path}/generate_opts2.py {output.ctl2} {input.fa} {input.gff} {input.snap} {params.protein} {params.transcript}
+        python3 {params.scripts_path}/generate_opts3.py {output.ctl3} {input.fa} {input.gff} {input.snap} {params.protein} {params.transcript}
         """
 
 rule maker_rnd2:
