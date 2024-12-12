@@ -13,10 +13,10 @@ RepeatMasker=/usr/local/apps/repeatmasker/4.1.5/RepeatMasker #location of Repeat
 exonerate=/usr/local/apps/exonerate/2.4.0/bin/exonerate #location of exonerate executable
 
 #-----Ab-initio Gene Prediction Algorithms
-snap=/usr/local/apps/snap/2013-11-29/snap #location of snap executable
+snap=/usr/local/apps/MAKER/3.01.04/snap/snap #location of snap executable
 gmhmme3= #location of eukaryotic genemark executable
 gmhmmp= #location of prokaryotic genemark executable
-augustus=/usr/local/apps/busco/Augustus/bin/augustus #location of augustus executable
+augustus=/usr/local/apps/augustus/3.4.0/bin/augustus #location of augustus executable
 fgenesh= #location of fgenesh executable
 evm= #location of EvidenceModeler executable
 tRNAscan-SE= #location of trnascan executable
