@@ -1,6 +1,6 @@
 
 ###########################################################################
-# Genome annotation pipeline using Funannotate in Snakemake
+# Genome annotation pipeline using Maker in Snakemake
 # Snakemake/5.13.0
 ###########################################################################
 from os.path import join
@@ -26,83 +26,85 @@ rule All:
     input:
         # Repeats
         #expand(join(input_dir,"{samples}-families.fa"),samples=SAMPLE),
-        #expand(join(result_dir,"{samples}/{samples}-families.fa"),samples=SAMPLE),
-        #expand(join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta.masked"),samples=SAMPLE),
-        #expand(join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta.out.gff"),samples=SAMPLE),
+        #expand(join(result_dir,"{samples}-families.fa"),samples=SAMPLE),
+        #expand(join(result_dir,"{samples}.cleaned.sorted.fasta.masked"),samples=SAMPLE),
+        #expand(join(result_dir,"{samples}.cleaned.sorted.fasta.out.gff"),samples=SAMPLE),
 
         # Funannotate - preprocessing
-        #expand(join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta"),samples=SAMPLE),
-        #expand(join(result_dir,"{samples}/{samples}.CSM.fasta"),samples=SAMPLE),
+        #expand(join(result_dir,"{samples}.cleaned.sorted.fasta"),samples=SAMPLE),
+        #expand(join(result_dir,"{samples}.CSM.fasta"),samples=SAMPLE),
 
         # Maker ctrl files
-        expand(join(result_dir,"{samples}/maker_opts_rnd1.ctl"),samples=SAMPLE),
-        expand(join(result_dir,"{samples}/maker_opts_rnd2.ctl"),samples=SAMPLE),
-        expand(join(result_dir,"{samples}/maker_opts_rnd3.ctl"),samples=SAMPLE),
-        expand(join(result_dir,"{samples}/rnd1.maker.output/rnd1_master_datastore_index.log"),samples=SAMPLE),
-        expand(join(result_dir,"{samples}/rnd2.maker.output/rnd2_master_datastore_index.log"),samples=SAMPLE),
-        expand(join(result_dir,"{samples}/rnd3.maker.output/rnd3_master_datastore_index.log"),samples=SAMPLE),
+        expand(join(result_dir,"maker_opts_rnd1.ctl"),samples=SAMPLE),
+        expand(join(result_dir,"maker_opts_rnd2.ctl"),samples=SAMPLE),
+        expand(join(result_dir,"maker_opts_rnd3.ctl"),samples=SAMPLE),
+        expand(join(result_dir,"rnd1.maker.output/rnd1_master_datastore_index.log"),samples=SAMPLE),
+        expand(join(result_dir,"rnd2.maker.output/rnd2_master_datastore_index.log"),samples=SAMPLE),
+        expand(join(result_dir,"rnd3.maker.output/rnd3_master_datastore_index.log"),samples=SAMPLE),
 
         # Maker GFFs
-        expand(join(result_dir,"{samples}/rnd1.maker.output/rnd1.all.gff"),samples=SAMPLE),
-        expand(join(result_dir,"{samples}/rnd1.maker.output/snap/rnd1.snap.hmm"),samples=SAMPLE),
-        expand(join(result_dir,"{samples}/rnd2.maker.output/rnd2.all.gff"),samples=SAMPLE),
-        expand(join(result_dir,"{samples}/rnd3.maker.output/rnd3.all.gff"),samples=SAMPLE),
+        expand(join(result_dir,"rnd1.maker.output/rnd1.all.gff"),samples=SAMPLE),
+        expand(join(result_dir,"rnd1.maker.output/snap/rnd1.snap.hmm"),samples=SAMPLE),
+        expand(join(result_dir,"rnd2.maker.output/rnd2.all.gff"),samples=SAMPLE),
+        expand(join(result_dir,"rnd3.maker.output/rnd3.all.gff"),samples=SAMPLE),
 
         
-#rule RepeatModeler:
-#  input:
-#    fa=join(input_dir,"{samples}.fasta"),
-#  output:
-#    fa=join(input_dir,"{samples}-families.fa"),
-#    rep=join(result_dir,"{samples}/{samples}-families.fa"),
-#  params:
-#    rname="RepeatModeler",
-#    dir=input_dir,
-#    id="{samples}",
-#    opdir=join(result_dir,"{samples}"),
-#  threads:
-#    48
-#  shell:
-#    """
-#    mkdir -p {params.opdir}
-#    cd {params.dir}
-#    module load repeatmodeler
-#    BuildDatabase -name {params.id} {input.fa}
-#    RepeatModeler -database {params.id} -pa {threads} -LTRStruct >& {params.id}.out
-#    cp {output.fa} {output.rep}
-#    """
+rule RepeatModeler:
+  input:
+    fa=join(input_dir,"{samples}.fasta"),
+  output:
+    fa=join(input_dir,"{samples}-families.fa"),
+    fa2=join(result_dir,"{samples}.fa"),
+    rep=join(result_dir,"{samples}-families.fa"),
+  params:
+    rname="RepeatModeler",
+    dir=input_dir,
+    id="{samples}",
+    opdir=result_dir,
+  threads:
+    48
+  shell:
+    """
+    mkdir -p {params.opdir}
+    cd {params.dir}
+    module load repeatmodeler
+    BuildDatabase -name {params.id} {input.fa}
+    RepeatModeler -database {params.id} -pa {threads} -LTRStruct >& {params.id}.out
+    cp {output.fa} {output.rep}
+    cp {input.fa} {output.fa2}
+    """
 
-#rule RepeatMasker:
-#  input:
-#    fa=join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta"),
-#    rep=join(result_dir,"{samples}/{samples}-families.fa"),
-#  output:
-#    fa=join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta.masked"),
-#    gff=join(result_dir,"{samples}/{samples}.cleaned.sorted.fasta.out.gff"),
-#  params:
-#    rname="RepeatMasker",
-#    dir=join(result_dir,"{samples}"),
-#    #rep=repeat_file,
-#    threads="48",
-#  shell:
-#    """
-#    cd {params.dir}
-#    module load repeatmasker
-#    RepeatMasker -u -s -poly -engine rmblast -pa {params.threads} -gff -no_is -gccalc -norna -lib {input.rep} {input.fa}
-#    """
+rule RepeatMasker:
+  input:
+    fa=join(result_dir,"{samples}.fasta"),
+    rep=join(result_dir,"{samples}-families.fa"),
+  output:
+    fa=join(result_dir,"{samples}.fasta.masked"),
+    gff=join(result_dir,"{samples}.fasta.out.gff"),
+  params:
+    rname="RepeatMasker",
+    dir=result_dir,
+    #rep=repeat_file,
+    threads="48",
+  shell:
+    """
+    cd {params.dir}
+    module load repeatmasker
+    RepeatMasker -u -s -poly -engine rmblast -pa {params.threads} -gff -no_is -gccalc -norna -lib {input.rep} {input.fa}
+    """
 
 rule maker_opts1:
     input:
-        fa=join(result_dir,"{samples}/{samples}.fasta"),
+        fa=join(result_dir,"{samples}.fasta.masked"),
     output:
-        ctl=join(result_dir,"{samples}/maker_opts_rnd1.ctl"),
+        ctl=join(result_dir,"maker_opts_rnd1.ctl"),
     params:
         rname="maker_opts1",
         protein=protein_file,
         transcript=transcript_file,
         augustus=augustus,
         scripts_path=join(result_dir,"param_files"),
-        outdir=join(result_dir,"{samples}"),
+        outdir=result_dir,
     shell:
         """
         mkdir -p {params.outdir}
@@ -113,14 +115,14 @@ rule maker_opts1:
 
 rule maker_rnd1:
     input:
-        fa=join(result_dir,"{samples}/{samples}.fasta"),
-        ctl=join(result_dir,"{samples}/maker_opts_rnd1.ctl"),
+        fa=join(result_dir,"{samples}.fasta.masked"),
+        ctl=join(result_dir,"maker_opts_rnd1.ctl"),
     output:
-        log=join(result_dir,"{samples}/rnd1.maker.output/rnd1_master_datastore_index.log"),
+        log=join(result_dir,"rnd1.maker.output/rnd1_master_datastore_index.log"),
     params:
         rname="maker_rnd1",
         outid="rnd1",
-        outdir=join(result_dir,"{samples}"),
+        outdir=result_dir,
         bopts=join(result_dir,"param_files/maker_bopts.log"),
         exe=join(result_dir,"param_files/maker_exe.log"),
     shell:
@@ -132,13 +134,13 @@ rule maker_rnd1:
 
 rule make_gff1:
     input:
-        log=join(result_dir,"{samples}/rnd1.maker.output/rnd1_master_datastore_index.log"),
+        log=join(result_dir,"rnd1.maker.output/rnd1_master_datastore_index.log"),
     output:
-        gff=join(result_dir,"{samples}/rnd1.maker.output/rnd1.all.gff"),
-        snap=join(result_dir,"{samples}/rnd1.maker.output/snap/rnd1.snap.hmm"),
+        gff=join(result_dir,"rnd1.maker.output/rnd1.all.gff"),
+        snap=join(result_dir,"rnd1.maker.output/snap/rnd1.snap.hmm"),
     params:
         rname="make_gff1",
-        outdir=join(result_dir,"{samples}"),
+        outdir=result_dir,
     shell:
         """
         module load maker snap
@@ -160,18 +162,18 @@ rule make_gff1:
 
 rule maker_opts2:
     input:
-        fa=join(result_dir,"{samples}/{samples}.fasta"),
-        gff=join(result_dir,"{samples}/rnd1.maker.output/rnd1.all.gff"),
-        snap=join(result_dir,"{samples}/rnd1.maker.output/snap/rnd1.snap.hmm"),
+        fa=join(result_dir,"{samples}.fasta.masked"),
+        gff=join(result_dir,"rnd1.maker.output/rnd1.all.gff"),
+        snap=join(result_dir,"rnd1.maker.output/snap/rnd1.snap.hmm"),
     output:
-        ctl2=join(result_dir,"{samples}/maker_opts_rnd2.ctl"),
-        ctl3=join(result_dir,"{samples}/maker_opts_rnd3.ctl"),
+        ctl2=join(result_dir,"maker_opts_rnd2.ctl"),
+        ctl3=join(result_dir,"maker_opts_rnd3.ctl"),
     params:
         rname="maker_opts2",
         protein=protein_file,
         transcript=transcript_file,
         scripts_path=join(result_dir,"param_files"),
-        outdir=join(result_dir,"{samples}"),
+        outdir=result_dir,
     shell:
         """
         mkdir -p {params.outdir}
@@ -181,14 +183,14 @@ rule maker_opts2:
 
 rule maker_rnd2:
     input:
-        fa=join(result_dir,"{samples}/{samples}.fasta"),
-        ctl=join(result_dir,"{samples}/maker_opts_rnd2.ctl"),
+        fa=join(result_dir,"{samples}.fasta.masked"),
+        ctl=join(result_dir,"maker_opts_rnd2.ctl"),
     output:
-        log=join(result_dir,"{samples}/rnd2.maker.output/rnd2_master_datastore_index.log"),
+        log=join(result_dir,"rnd2.maker.output/rnd2_master_datastore_index.log"),
     params:
         rname="maker_rnd2",
         outid="rnd2",
-        outdir=join(result_dir,"{samples}"),
+        outdir=result_dir,
         bopts=join(result_dir,"param_files/maker_bopts.log"),
         exe=join(result_dir,"param_files/maker_exe.log"),
     shell:
@@ -200,12 +202,12 @@ rule maker_rnd2:
 
 rule make_gff2:
     input:
-        log=join(result_dir,"{samples}/rnd2.maker.output/rnd2_master_datastore_index.log"),
+        log=join(result_dir,"rnd2.maker.output/rnd2_master_datastore_index.log"),
     output:
-        gff=join(result_dir,"{samples}/rnd2.maker.output/rnd2.all.gff"),
+        gff=join(result_dir,"rnd2.maker.output/rnd2.all.gff"),
     params:
         rname="make_gff2",
-        outdir=join(result_dir,"{samples}"),
+        outdir=result_dir
     shell:
         """
         module load maker snap
@@ -215,14 +217,14 @@ rule make_gff2:
 
 rule maker_rnd3:
     input:
-        fa=join(result_dir,"{samples}/{samples}.fasta"),
-        ctl=join(result_dir,"{samples}/maker_opts_rnd3.ctl"),
+        fa=join(result_dir,"{samples}.fasta.masked"),
+        ctl=join(result_dir,"maker_opts_rnd3.ctl"),
     output:
-        log=join(result_dir,"{samples}/rnd3.maker.output/rnd3_master_datastore_index.log"),
+        log=join(result_dir,"rnd3.maker.output/rnd3_master_datastore_index.log"),
     params:
         rname="maker_rnd3",
         outid="rnd2",
-        outdir=join(result_dir,"{samples}"),
+        outdir=result_dir,
         bopts=join(result_dir,"param_files/maker_bopts.log"),
         exe=join(result_dir,"param_files/maker_exe.log"),
     shell:
@@ -234,12 +236,12 @@ rule maker_rnd3:
 
 rule make_gff3:
     input:
-        log=join(result_dir,"{samples}/rnd3.maker.output/rnd3_master_datastore_index.log"),
+        log=join(result_dir,"rnd3.maker.output/rnd3_master_datastore_index.log"),
     output:
-        gff=join(result_dir,"{samples}/rnd3.maker.output/rnd3.all.gff"),
+        gff=join(result_dir,"rnd3.maker.output/rnd3.all.gff"),
     params:
         rname="make_gff3",
-        outdir=join(result_dir,"{samples}"),
+        outdir=result_dir,
     shell:
         """
         module load maker snap
