@@ -6,3 +6,4 @@ protein_file: "/data/NCBR/projects/NCBR-174/FunannotateMake/param_files/strongyl
 transcript_file: "/data/NCBR/projects/NCBR-174/FunannotateMake/param_files/strongyloides_stercoralis.PRJEB528.WBPS17.mRNA_transcripts.fa"
 funannotate_dir: "/data/NCBR/projects/NCBR-298"
 species: "Strongyloides stercoralis"
+augustus: "caenorhabditis"
