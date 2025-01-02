@@ -13,7 +13,6 @@ input_dir = config["input_dir"]
 repeat_file = config["repeat_file"]
 protein_file = config["protein_file"]
 transcript_file = config["transcript_file"]
-alt_transcript_file = config["alt_transcript_file"]
 funannotate_dir = config["funannotate_dir"]
 augustus="caenorhabditis",
 
@@ -101,14 +100,13 @@ rule maker_opts1:
         rname="maker_opts1",
         protein=protein_file,
         transcript=transcript_file,
-        alt_transcript=alt_transcript_file,
         augustus=augustus,
         scripts_path=join(result_dir,"param_files"),
         outdir=join(result_dir,"{samples}"),
     shell:
         """
         mkdir -p {params.outdir}
-        python3 {params.scripts_path}/generate_opts1.py {output.ctl} {input.fa} {params.protein} {params.transcript} {params.augustus} {params.alt_transcript}
+        python3 {params.scripts_path}/generate_opts1.py {output.ctl} {input.fa} {params.protein} {params.transcript} {params.augustus}
         """
 
 
