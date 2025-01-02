@@ -18,21 +18,20 @@ augustus = config["augustus"]
 
 #SAMPLE = ["pilon124_round3_chromosomesnumbered"]
 SAMPLE = list(glob_wildcards(join(input_dir, "{ids}.fasta")))[0]
+PROT = list(protein_file.split(","))
 #ID = glob_wildcards(join(fastq_dir, "{ids}.fastq.gz"))
 
 print(SAMPLE)
+print(PROT)
 
 rule All:
     input:
         # Repeats
-        #expand(join(input_dir,"{samples}-families.fa"),samples=SAMPLE),
-        #expand(join(result_dir,"{samples}-families.fa"),samples=SAMPLE),
-        #expand(join(result_dir,"{samples}.cleaned.sorted.fasta.masked"),samples=SAMPLE),
-        #expand(join(result_dir,"{samples}.cleaned.sorted.fasta.out.gff"),samples=SAMPLE),
-
-        # Funannotate - preprocessing
-        #expand(join(result_dir,"{samples}.cleaned.sorted.fasta"),samples=SAMPLE),
-        #expand(join(result_dir,"{samples}.CSM.fasta"),samples=SAMPLE),
+        expand(join(input_dir,"{samples}-families.fa"),samples=SAMPLE),
+        expand(join(result_dir,"{samples}-families.fa"),samples=SAMPLE),
+        expand(join(result_dir,"{samples}.fasta"),samples=SAMPLE),
+        expand(join(result_dir,"{samples}.fasta.masked"),samples=SAMPLE),
+        expand(join(result_dir,"{samples}.fasta.out.gff"),samples=SAMPLE),
 
         # Maker ctrl files
         expand(join(result_dir,"maker_opts_rnd1.ctl"),samples=SAMPLE),
@@ -43,11 +42,32 @@ rule All:
         expand(join(result_dir,"rnd3.maker.output/rnd3_master_datastore_index.log"),samples=SAMPLE),
 
         # Maker GFFs
-        expand(join(result_dir,"rnd1.maker.output/rnd1.all.gff"),samples=SAMPLE),
-        expand(join(result_dir,"rnd1.maker.output/snap/rnd1.snap.hmm"),samples=SAMPLE),
-        expand(join(result_dir,"rnd2.maker.output/rnd2.all.gff"),samples=SAMPLE),
-        expand(join(result_dir,"rnd3.maker.output/rnd3.all.gff"),samples=SAMPLE),
+        join(result_dir,"rnd1.maker.output/rnd1.all.gff"),
+        join(result_dir,"rnd1.maker.output/snap/rnd1.snap.hmm"),
+        join(result_dir,"rnd2.maker.output/rnd2.all.gff"),
+        join(result_dir,"rnd2.maker.output/rnd2.fna"),
+        join(result_dir,"rnd2.maker.output/rnd2.faa"),
+        join(result_dir,"rnd3.maker.output/rnd3.all.gff"),
+        join(result_dir,"rnd3.maker.output/rnd3.fna"),
+        join(result_dir,"rnd3.maker.output/rnd3.faa"),
 
+        # rename gffs
+        expand(join(result_dir,"rnd2.maker.output/{samples}.gff"),samples=SAMPLE),
+        expand(join(result_dir,"rnd2.maker.output/{samples}.gtf"),samples=SAMPLE),
+        expand(join(result_dir,"rnd2.maker.output/{samples}.clean.gtf"),samples=SAMPLE),
+        expand(join(result_dir,"rnd2.maker.output/{samples}.fna"),samples=SAMPLE),
+        expand(join(result_dir,"rnd2.maker.output/{samples}.faa"),samples=SAMPLE),
+        expand(join(result_dir,"rnd3.maker.output/{samples}.gff"),samples=SAMPLE),
+        expand(join(result_dir,"rnd3.maker.output/{samples}.gtf"),samples=SAMPLE),
+        expand(join(result_dir,"rnd3.maker.output/{samples}.clean.gtf"),samples=SAMPLE),
+        expand(join(result_dir,"rnd3.maker.output/{samples}.fna"),samples=SAMPLE),
+        expand(join(result_dir,"rnd3.maker.output/{samples}.faa"),samples=SAMPLE),
+
+        # functional annotation
+        expand(join(result_dir, "rnd2.maker.output/{samples}.{prots}.gff3"),samples=SAMPLE,prots=PROT),
+        expand(join(result_dir,"rnd2.maker.output/{samples}.{prots}.blast"),samples=SAMPLE,prots=PROT),
+        expand(join(result_dir, "rnd3.maker.output/{samples}.{prots}.gff3"),samples=SAMPLE,prots=PROT),
+        expand(join(result_dir,"rnd3.maker.output/{samples}.{prots}.blast"),samples=SAMPLE,prots=PROT),
         
 rule RepeatModeler:
   input:
