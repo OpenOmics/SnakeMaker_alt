@@ -13,8 +13,8 @@ input_dir = config["input_dir"]
 repeat_file = config["repeat_file"]
 protein_file = config["protein_file"]
 transcript_file = config["transcript_file"]
-funannotate_dir = config["funannotate_dir"]
-augustus="caenorhabditis",
+augustus = config["augustus"]
+
 
 #SAMPLE = ["pilon124_round3_chromosomesnumbered"]
 SAMPLE = list(glob_wildcards(join(input_dir, "{ids}.fasta")))[0]
