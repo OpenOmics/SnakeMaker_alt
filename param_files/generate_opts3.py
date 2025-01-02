@@ -69,7 +69,7 @@ out1.write("""min_contig=5000 #skip genome contigs below this length (under 10kb
 out1.write("""\n""")
 out1.write("""pred_flank=200 #flank for extending evidence clusters sent to gene predictors\n""")
 out1.write("""pred_stats=0 #report AED and QI statistics for all predictions as well as models\n""")
-out1.write("""AED_threshold=0.25 #Maximum Annotation Edit Distance allowed (bound by 0 and 1)\n""")
+out1.write("""AED_threshold=0.3 #Maximum Annotation Edit Distance allowed (bound by 0 and 1)\n""")
 out1.write("""min_protein=0 #require at least this many amino acids in predicted proteins\n""")
 out1.write("""alt_splice=0 #Take extra steps to try and find alternative splicing, 1 = yes, 0 = no\n""")
 out1.write("""always_complete=0 #extra steps to force start and stop codons, 1 = yes, 0 = no\n""")
