@@ -7,19 +7,19 @@ from os.path import join
 from snakemake.io import expand, glob_wildcards
 from Bio import SeqIO
 
-result_dir = config["result_dir"]
-input_dir = config["input_dir"]
+# Load configuration paths and files
+result_dir = config["result_dir"]  # Directory to store results
+input_dir = config["input_dir"]   # Directory containing input files
+repeat_file = config["repeat_file"]  # File containing repeat sequences
+protein_file = config["protein_file"]  # Protein reference file(s)
+transcript_file = config["transcript_file"]  # Transcript reference file(s)
+augustus = config["augustus"]  # Augustus configuration file
 
-repeat_file = config["repeat_file"]
-protein_file = config["protein_file"]
-transcript_file = config["transcript_file"]
-augustus = config["augustus"]
 
-
-#SAMPLE = ["pilon124_round3_chromosomesnumbered"]
-SAMPLE = list(glob_wildcards(join(input_dir, "{ids}.fasta")))[0]
-PROT = list(protein_file.split(","))
-#ID = glob_wildcards(join(fastq_dir, "{ids}.fastq.gz"))
+SAMPLE = list(glob_wildcards(join(input_dir, "{ids}.fasta")))
+if not SAMPLE:
+    raise ValueError("No FASTA files found in the input directory!")
+PROT = list(protein_file.split(","))  # Split multiple protein files
 
 print(SAMPLE)
 print(PROT)
