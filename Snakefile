@@ -203,6 +203,9 @@ rule maker_rnd2:
 rule make_gff2:
     input:
         log=join(result_dir,"rnd2.maker.output/rnd2_master_datastore_index.log"),
+        fa=join(result_dir,"{samples}.fasta"),
+        faa=join(result_dir,"rnd2.maker.output/rnd2.all.faa"),
+        fna=join(result_dir,"rnd2.maker.output/rnd2.all.fna"),
     output:
         gff=join(result_dir,"rnd2.maker.output/rnd2.all.gff"),
     params:
@@ -213,7 +216,32 @@ rule make_gff2:
         module load maker snap
         cd {params.outdir}/rnd2.maker.output/
         gff3_merge -d {input.log}
+        /data/OpenOmics/references/brakerMake/gffread/gffread -g {input.fa} -y {output.faa} -x {output.fna} {input.gff}
         """
+
+rule rnd2_gff_rename:
+    input:
+        gff=join(result_dir,"rnd2.maker.output/rnd2.all.gff"),
+        aa=join(result_dir,"rnd2.maker.output/rnd2.all.faa"),
+        cds=join(result_dir,"rnd2.maker.output/rnd2.all.fna"),
+    output:
+        map=temp(join(result_dir, "rnd2.maker.output/{samples}.map")),
+        gff=join(result_dir, "rnd2.maker.output/{samples}.gff3"),
+        aa=join(result_dir, "rnd2.maker.output/{samples}.faa"),
+        cds=join(result_dir, "rnd2.maker.output/{samples}.fna"),
+    params:
+        species_id="{samples}",
+        rname="gff_rename",
+    shell:
+        """
+        module load maker
+        maker_map_ids --prefix {params.species_id} --justify 5  {input.gff} > {output.map}
+        cp {input.gff} {output.gff}
+        map_gff_ids {output.map} {output.gff}
+        cp {input.aa} {output.aa}
+        cp {input.cds} {output.cds}
+        map_fasta_ids {output.map} {output.aa}
+        map_fasta_ids {output.map} {output.cds}
 
 rule maker_rnd3:
     input:
@@ -237,8 +265,11 @@ rule maker_rnd3:
 rule make_gff3:
     input:
         log=join(result_dir,"rnd3.maker.output/rnd3_master_datastore_index.log"),
+        fa=join(result_dir,"{samples}.fasta"),
     output:
         gff=join(result_dir,"rnd3.maker.output/rnd3.all.gff"),
+        faa=join(result_dir,"rnd3.maker.output/rnd3.all.faa"),
+        fna=join(result_dir,"rnd3.maker.output/rnd3.all.fna"),
     params:
         rname="make_gff3",
         outdir=result_dir,
@@ -247,4 +278,53 @@ rule make_gff3:
         module load maker snap
         cd {params.outdir}/rnd3.maker.output/
         gff3_merge -d {input.log}
+        /data/OpenOmics/references/brakerMake/gffread/gffread -g {input.fa} -y {output.faa} -x {output.fna} {input.gff}
+        """
+
+rule rnd3_gff_rename:
+    input:
+        gff=join(result_dir,"rnd3.maker.output/rnd3.all.gff"),
+        aa=join(result_dir,"rnd3.maker.output/rnd3.all.faa"),
+        cds=join(result_dir,"rnd3.maker.output/rnd3.all.fna"),
+    output:
+        map=temp(join(result_dir, "rnd3.maker.output/{samples}.map")),
+        gff=join(result_dir, "rnd3.maker.output/{samples}.gff3"),
+        aa=join(result_dir, "rnd3.maker.output/{samples}.faa"),
+        cds=join(result_dir, "rnd3.maker.output/{samples}.fna"),
+    params:
+        species_id="{samples}",
+        rname="gff_rename",
+    shell:
+        """
+        module load maker
+        maker_map_ids --prefix {params.species_id} --justify 5  {input.gff} > {output.map}
+        cp {input.gff} {output.gff}
+        map_gff_ids {output.map} {output.gff}
+        cp {input.aa} {output.aa}
+        cp {input.cds} {output.cds}
+        map_fasta_ids {output.map} {output.aa}
+        map_fasta_ids {output.map} {output.cds}
+        """
+
+rule rnd3_gff_annot:
+    input:
+        gff=join(result_dir, "{samples}_{prots}.gff3"),
+        prot=join(result_dir, "{samples}_{prots}.prot"),
+        cds=join(result_dir, "{samples}_{prots}.cds"),
+    output:
+        gff=join(result_dir, "{samples}_{prots}.functional.gff3"),
+        prot=join(result_dir, "{samples}_{prots}.functional.aa"),
+        cds=join(result_dir, "{samples}_{prots}.functional.cds"),
+        blast=temp(join(result_dir,"{samples}_{prots}.blast")),
+    params:
+        rname="gff_annot",
+        threads=8,
+        uniprot=protein_file,
+    shell:
+        """
+        module load blast maker
+        blastp -query {input.prot} -db {params.uniprot} -evalue 1e-6 -max_hsps 1 -max_target_seqs 1 -outfmt 6 -out {output.blast} -num_threads {params.threads}
+        maker_functional_gff {params.uniprot} {output.blast} {input.gff} > {output.gff}
+        maker_functional_fasta {params.uniprot} {output.blast} {input.prot} > {output.prot}
+        maker_functional_fasta {params.uniprot} {output.blast} {input.cds} > {output.cds}
         """
