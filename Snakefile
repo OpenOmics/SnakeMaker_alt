@@ -231,7 +231,7 @@ rule rnd2_gff_rename:
         cds=join(result_dir, "rnd2.maker.output/{samples}.fna"),
     params:
         species_id="{samples}",
-        rname="gff_rename",
+        rname="rnd2_gff_rename",
     shell:
         """
         module load maker
@@ -242,6 +242,41 @@ rule rnd2_gff_rename:
         cp {input.cds} {output.cds}
         map_fasta_ids {output.map} {output.aa}
         map_fasta_ids {output.map} {output.cds}
+
+rule rnd2_gff2gtf:
+    input:
+        gff=join(result_dir, "rnd2.maker.output/{samples}.gff3"),
+    output:
+        gff=join(result_dir, "rnd2.maker.output/{samples}.gtf"),
+        clean=join(result_dir, "rnd2.maker.output/{samples}.clean.gtf"),
+    params:
+        rname="rnd2_gff2gtf",
+    shell:
+        """
+        module load agat/1.2.0 python
+        agat_convert_sp_gff2gtf.pl --gff {input.gff} -o {output.gtf}
+        python /data/OpenOmics/references/brakerMake/clean_gtf.py {output.gtf} > {output.clean}
+        """
+
+rule rnd2_gff_annot:
+    input:
+        gff=join(result_dir, "rnd2.maker.output/{samples}.gff3"),
+        prot=join(result_dir, "rnd2.maker.output/{samples}.faa"),
+        cds=join(result_dir, "rnd2.maker.output/{samples}.fna"),
+    output:
+        gff=join(result_dir, "rnd2.maker.output/{samples}.{prots}.gff3"),
+        blast=join(result_dir,"rnd2.maker.output/{samples}.{prots}.blast"),
+    params:
+        rname="rnd2_gff_annot",
+        threads=8,
+        uniprot=protein_file,
+    shell:
+        """
+        module load blast maker
+        blastp -query {input.prot} -db {params.uniprot} -evalue 1e-6 -max_hsps 1 -max_target_seqs 1 -outfmt 6 -out {output.blast} -num_threads {params.threads}
+        maker_functional_gff {params.uniprot} {output.blast} {input.gff} > {output.gff}
+        """
+
 
 rule maker_rnd3:
     input:
@@ -293,7 +328,7 @@ rule rnd3_gff_rename:
         cds=join(result_dir, "rnd3.maker.output/{samples}.fna"),
     params:
         species_id="{samples}",
-        rname="gff_rename",
+        rname="rnd3_gff_rename",
     shell:
         """
         module load maker
@@ -306,18 +341,31 @@ rule rnd3_gff_rename:
         map_fasta_ids {output.map} {output.cds}
         """
 
+rule rnd3_gff2gtf:
+    input:
+        gff=join(result_dir, "rnd3.maker.output/{samples}.gff3"),
+    output:
+        gff=join(result_dir, "rnd3.maker.output/{samples}.gtf"),
+        clean=join(result_dir, "rnd3.maker.output/{samples}.clean.gtf"),
+    params:
+        rname="rnd3_gff2gtf",
+    shell:
+        """
+        module load agat/1.2.0 python
+        agat_convert_sp_gff2gtf.pl --gff {input.gff} -o {output.gtf}
+        python /data/OpenOmics/references/brakerMake/clean_gtf.py {output.gtf} > {output.clean}
+        """
+
 rule rnd3_gff_annot:
     input:
-        gff=join(result_dir, "{samples}_{prots}.gff3"),
-        prot=join(result_dir, "{samples}_{prots}.prot"),
-        cds=join(result_dir, "{samples}_{prots}.cds"),
+        gff=join(result_dir, "rnd3.maker.output/{samples}.gff3"),
+        prot=join(result_dir, "rnd3.maker.output/{samples}.faa"),
+        cds=join(result_dir, "rnd3.maker.output/{samples}.fna"),
     output:
-        gff=join(result_dir, "{samples}_{prots}.functional.gff3"),
-        prot=join(result_dir, "{samples}_{prots}.functional.aa"),
-        cds=join(result_dir, "{samples}_{prots}.functional.cds"),
-        blast=temp(join(result_dir,"{samples}_{prots}.blast")),
+        gff=join(result_dir, "rnd3.maker.output/{samples}.{prots}.gff3"),
+        blast=join(result_dir,"rnd3.maker.output/{samples}.{prots}.blast"),
     params:
-        rname="gff_annot",
+        rname="rnd3_gff_annot",
         threads=8,
         uniprot=protein_file,
     shell:
@@ -325,6 +373,4 @@ rule rnd3_gff_annot:
         module load blast maker
         blastp -query {input.prot} -db {params.uniprot} -evalue 1e-6 -max_hsps 1 -max_target_seqs 1 -outfmt 6 -out {output.blast} -num_threads {params.threads}
         maker_functional_gff {params.uniprot} {output.blast} {input.gff} > {output.gff}
-        maker_functional_fasta {params.uniprot} {output.blast} {input.prot} > {output.prot}
-        maker_functional_fasta {params.uniprot} {output.blast} {input.cds} > {output.cds}
         """
