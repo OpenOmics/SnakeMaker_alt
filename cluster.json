@@ -79,10 +79,16 @@
               "partition": "norm",
               "threads": "40",
       },
-            "maker_rnd3": {
+      "maker_rnd3": {
               "mem": "300g",
               "time": "5-00:00:00",
               "partition": "norm",
               "threads": "40",
+      },
+      "rnd2_gff2gtf": {
+            "mem": "150g",
+      },
+      "rnd3_gff2gtf": {
+            "mem": "150g",
       },
 }
