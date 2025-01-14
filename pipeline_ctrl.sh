@@ -2,7 +2,7 @@
 set -e
 
 module load python/3.7
-module load snakemake/5.24.1
+module load snakemake/5.13.0
 
 R=$2
 
