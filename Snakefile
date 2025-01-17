@@ -21,7 +21,7 @@ if not SAMPLE:
 
 PROT = list(protein_file.split(","))  # Split multiple protein files
 PROT_NAME = [os.path.basename(x) for x in PROT]
-PROT_NAME = [x.rstrip(".fasta") for x in PROT_NAME]
+PROT_NAME = [x.rstrip(".fasta").rstrip(".faa") for x in PROT_NAME]
 
 print(SAMPLE)
 print(PROT_NAME)
