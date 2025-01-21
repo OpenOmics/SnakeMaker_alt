@@ -161,7 +161,7 @@ rule make_gff1:
         outdir=result_dir,
     shell:
         """
-        module load maker snap
+        module load maker
         cd {params.outdir}/{wildcards.samples}.rnd1.maker.output/
         gff3_merge -d {input.log}
         mkdir -p {params.outdir}/{wildcards.samples}.rnd1.maker.output/snap
