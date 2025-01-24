@@ -38,16 +38,13 @@ rule All:
         # Maker ctrl files
         expand(join(result_dir,"{samples}.maker_opts_rnd1.ctl"),samples=SAMPLE),
         expand(join(result_dir,"{samples}.maker_opts_rnd2.ctl"),samples=SAMPLE),
-        expand(join(result_dir,"{samples}.maker_opts_rnd3.ctl"),samples=SAMPLE),
         expand(join(result_dir,"{samples}.rnd1.maker.output/{samples}.rnd1_master_datastore_index.log"),samples=SAMPLE),
         expand(join(result_dir,"{samples}.rnd2.maker.output/{samples}.rnd2_master_datastore_index.log"),samples=SAMPLE),
-        expand(join(result_dir,"{samples}.rnd3.maker.output/{samples}.rnd3_master_datastore_index.log"),samples=SAMPLE),
 
         # Maker GFFs
         expand(join(result_dir,"{samples}.rnd1.maker.output/{samples}.rnd1.all.gff"),samples=SAMPLE),
         expand(join(result_dir,"{samples}.rnd1.maker.output/snap/rnd1.snap.hmm"),samples=SAMPLE),
         expand(join(result_dir,"{samples}.rnd2.maker.output/{samples}.rnd2.all.gff"),samples=SAMPLE),
-        expand(join(result_dir,"{samples}.rnd3.maker.output/{samples}.rnd3.all.gff"),samples=SAMPLE),
 
         # rename gffs
         expand(join(result_dir,"{samples}.rnd2.maker.output/{samples}.gff3"),samples=SAMPLE),
@@ -55,17 +52,10 @@ rule All:
         expand(join(result_dir,"{samples}.rnd2.maker.output/{samples}.clean.gtf"),samples=SAMPLE),
         expand(join(result_dir,"{samples}.rnd2.maker.output/{samples}.fna"),samples=SAMPLE),
         expand(join(result_dir,"{samples}.rnd2.maker.output/{samples}.faa"),samples=SAMPLE),
-        expand(join(result_dir,"{samples}.rnd3.maker.output/{samples}.gff3"),samples=SAMPLE),
-        expand(join(result_dir,"{samples}.rnd3.maker.output/{samples}.gtf"),samples=SAMPLE),
-        expand(join(result_dir,"{samples}.rnd3.maker.output/{samples}.clean.gtf"),samples=SAMPLE),
-        expand(join(result_dir,"{samples}.rnd3.maker.output/{samples}.fna"),samples=SAMPLE),
-        expand(join(result_dir,"{samples}.rnd3.maker.output/{samples}.faa"),samples=SAMPLE),
 
         # functional annotation
         expand(join(result_dir, "{samples}.rnd2.maker.output/{samples}.{prots}.gff3"),samples=SAMPLE,prots=PROT_NAME),
         expand(join(result_dir,"{samples}.rnd2.maker.output/{samples}.{prots}.blast"),samples=SAMPLE,prots=PROT_NAME),
-        expand(join(result_dir, "{samples}.rnd3.maker.output/{samples}.{prots}.gff3"),samples=SAMPLE,prots=PROT_NAME),
-        expand(join(result_dir,"{samples}.rnd3.maker.output/{samples}.{prots}.blast"),samples=SAMPLE,prots=PROT_NAME),
 
 rule RepeatModeler:
   input:
@@ -185,7 +175,6 @@ rule maker_opts2:
         snap=join(result_dir,"{samples}.rnd1.maker.output/snap/rnd1.snap.hmm"),
     output:
         ctl2=join(result_dir,"{samples}.maker_opts_rnd2.ctl"),
-        ctl3=join(result_dir,"{samples}.maker_opts_rnd3.ctl"),
     params:
         rname="maker_opts2",
         protein=protein_file,
@@ -196,7 +185,6 @@ rule maker_opts2:
         """
         mkdir -p {params.outdir}
         python3 {params.scripts_path}/generate_opts2.py {output.ctl2} {input.fa} {input.gff} {input.snap} {params.protein} {params.transcript}
-        python3 {params.scripts_path}/generate_opts3.py {output.ctl3} {input.fa} {input.gff} {input.snap} {params.protein} {params.transcript}
         """
 
 rule maker_rnd2:
@@ -296,100 +284,3 @@ rule rnd2_gff_annot:
         maker_functional_gff {params.uniprot} {output.blast} {input.gff} > {output.gff}
         """
 
-
-rule maker_rnd3:
-    input:
-        fa=join(result_dir,"{samples}.fasta.masked"),
-        ctl=join(result_dir,"{samples}.maker_opts_rnd3.ctl"),
-    output:
-        log=join(result_dir,"{samples}.rnd3.maker.output/{samples}.rnd3_master_datastore_index.log"),
-    params:
-        rname="maker_rnd3",
-        outid="{samples}.rnd3",
-        outdir=result_dir,
-        bopts=join(result_dir,"param_files/maker_bopts.log"),
-        exe=join(result_dir,"param_files/maker_exe.log"),
-    shell:
-        """
-        module load maker
-        cd {params.outdir}
-        valgrind mpiexec -c 1 -np 40 maker -RM_off -base {params.outid} {input.ctl} {params.bopts} {params.exe}
-        """
-
-rule make_gff3:
-    input:
-        log=join(result_dir,"{samples}.rnd3.maker.output/{samples}.rnd3_master_datastore_index.log"),
-        fa=join(result_dir,"{samples}.fasta"),
-    output:
-        gff=join(result_dir,"{samples}.rnd3.maker.output/{samples}.rnd3.all.gff"),
-        faa=join(result_dir,"{samples}.rnd3.maker.output/{samples}.rnd3.all.faa"),
-        fna=join(result_dir,"{samples}.rnd3.maker.output/{samples}.rnd3.all.fna"),
-    params:
-        rname="make_gff3",
-        outdir=result_dir,
-    shell:
-        """
-        module load maker snap
-        cd {params.outdir}/{wildcards.samples}.rnd3.maker.output/
-        gff3_merge -d {input.log}
-        /data/OpenOmics/references/brakerMake/gffread/gffread -g {input.fa} -y {output.faa} -x {output.fna} {output.gff}
-        """
-
-rule rnd3_gff_rename:
-    input:
-        gff=join(result_dir,"{samples}.rnd3.maker.output/{samples}.rnd3.all.gff"),
-        aa=join(result_dir,"{samples}.rnd3.maker.output/{samples}.rnd3.all.faa"),
-        cds=join(result_dir,"{samples}.rnd3.maker.output/{samples}.rnd3.all.fna"),
-    output:
-        map=temp(join(result_dir, "{samples}.rnd3.maker.output/{samples}.map")),
-        gff=join(result_dir, "{samples}.rnd3.maker.output/{samples}.gff3"),
-        aa=join(result_dir, "{samples}.rnd3.maker.output/{samples}.faa"),
-        cds=join(result_dir, "{samples}.rnd3.maker.output/{samples}.fna"),
-    params:
-        species_id="{samples}",
-        rname="rnd3_gff_rename",
-    shell:
-        """
-        module load maker
-        maker_map_ids --prefix {params.species_id} --justify 5  {input.gff} > {output.map}
-        cp {input.gff} {output.gff}
-        map_gff_ids {output.map} {output.gff}
-        cp {input.aa} {output.aa}
-        cp {input.cds} {output.cds}
-        map_fasta_ids {output.map} {output.aa}
-        map_fasta_ids {output.map} {output.cds}
-        """
-
-rule rnd3_gff2gtf:
-    input:
-        gff=join(result_dir, "{samples}.rnd3.maker.output/{samples}.gff3"),
-    output:
-        gtf=join(result_dir, "{samples}.rnd3.maker.output/{samples}.gtf"),
-        clean=join(result_dir, "{samples}.rnd3.maker.output/{samples}.clean.gtf"),
-    params:
-        rname="rnd3_gff2gtf",
-    shell:
-        """
-        module load agat/1.2.0 python
-        agat_convert_sp_gff2gtf.pl --gff {input.gff} -o {output.gtf}
-        python /data/OpenOmics/references/brakerMake/clean_gtf.py {output.gtf} > {output.clean}
-        """
-
-rule rnd3_gff_annot:
-    input:
-        gff=join(result_dir, "{samples}.rnd3.maker.output/{samples}.gff3"),
-        prot=join(result_dir, "{samples}.rnd3.maker.output/{samples}.faa"),
-        cds=join(result_dir, "{samples}.rnd3.maker.output/{samples}.fna"),
-    output:
-        gff=join(result_dir, "{samples}.rnd3.maker.output/{samples}.{prots}.gff3"),
-        blast=join(result_dir,"{samples}.rnd3.maker.output/{samples}.{prots}.blast"),
-    params:
-        rname="rnd3_gff_annot",
-        threads=8,
-        uniprot=protein_file,
-    shell:
-        """
-        module load blast maker
-        blastp -query {input.prot} -db {params.uniprot} -evalue 1e-6 -max_hsps 1 -max_target_seqs 1 -outfmt 6 -out {output.blast} -num_threads {params.threads}
-        maker_functional_gff {params.uniprot} {output.blast} {input.gff} > {output.gff}
-        """
